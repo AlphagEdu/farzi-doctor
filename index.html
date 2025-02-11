@@ -94,14 +94,8 @@
         </form>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.33.0/docxtemplater.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
     <script>
         async function generateReport() {
-            // Get user inputs
             const name = document.getElementById('name').value;
             const regDate = document.getElementById('regDate').value;
             const sampleCollection = document.getElementById('sampleCollection').value;
@@ -109,56 +103,30 @@
             const age = document.getElementById('age').value;
             const gender = document.getElementById('gender').value;
 
-            // Validate inputs
             if (!name || !regDate || !sampleCollection || !printDate || !age || !gender) {
                 alert("All fields are required!");
                 return;
             }
 
-            // Format dates
-            const formatDate = (isoDate) => {
-                const [y, m, d] = isoDate.split('-');
-                return `${d}/${m}/${y}`;
-            };
+            const response = await fetch('/.netlify/functions/generateReport', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, regDate, sampleCollection, printDate, age, gender })
+            });
 
-            const formatDateTime = (isoDateTime) => {
-                const [datePart, timePart] = isoDateTime.split('T');
-                const [y, m, d] = datePart.split('-');
-                const [h, min] = timePart.split(':');
-                return `${d}/${m}/${y} ${h}:${min}`;
-            };
-
-            // Prepare replacements
-            const replacements = {
-                'Shivam Nishad': name,
-                '16/01/2025 14:13': formatDateTime(`${regDate}T14:13`),
-                '16/01/2025 14:27': formatDateTime(sampleCollection),
-                '17/01/2025 17:24': formatDateTime(printDate),
-                '14 Years / Male': `${age} Years / ${gender}`
-            };
-
-            try {
-                // Load the DOCX template
-                const response = await fetch('report_draft.docx');
-                const arrayBuffer = await response.arrayBuffer();
-
-                // Initialize docxtemplater with JSZip 3.x syntax
-                const zip = await JSZip.loadAsync(arrayBuffer);
-                const doc = new window.docxtemplater(zip);
-
-                // Replace placeholders
-                doc.setData(replacements);
-                doc.render();
-
-                // Generate the updated DOCX
-                const updatedDoc = doc.getZip().generate({ type: 'blob' });
-
-                // Save as DOCX
-                saveAs(updatedDoc, 'updated_report.docx');
-
-            } catch (error) {
-                alert(`Error: ${error.message}`);
+            if (!response.ok) {
+                alert("An error occurred while generating the report.");
+                return;
             }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'updated_report.docx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
     </script>
 </body>
