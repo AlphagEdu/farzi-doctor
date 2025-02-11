@@ -94,8 +94,8 @@
         </form>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.33.0/docxtemplater.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.33.0/docxtemplater.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
@@ -142,9 +142,9 @@
                 const response = await fetch('report_draft.docx');
                 const arrayBuffer = await response.arrayBuffer();
 
-                // Initialize docxtemplater
-                const zip = new JSZip(arrayBuffer);
-                const doc = new docxtemplater().loadZip(zip);
+                // Initialize docxtemplater with JSZip 3.x syntax
+                const zip = await JSZip.loadAsync(arrayBuffer);
+                const doc = new window.docxtemplater(zip);
 
                 // Replace placeholders
                 doc.setData(replacements);
@@ -155,14 +155,6 @@
 
                 // Save as DOCX
                 saveAs(updatedDoc, 'updated_report.docx');
-
-                // Optional: Convert to PDF
-                // const pdfDoc = await PDFLib.PDFDocument.create();
-                // const page = pdfDoc.addPage();
-                // const text = `Name: ${name}\nReg Date: ${regDate}\nSample Collection: ${sampleCollection}\nPrint Date: ${printDate}\nAge: ${age}\nGender: ${gender}`;
-                // page.drawText(text, { x: 50, y: 750, size: 12 });
-                // const pdfBytes = await pdfDoc.save();
-                // saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), 'updated_report.pdf');
 
             } catch (error) {
                 alert(`Error: ${error.message}`);
