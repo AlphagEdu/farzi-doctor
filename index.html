@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modify & Download Word Report</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.6/pizzip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.27.0/docxtemplater.min.js"></script>
+</head>
+<body>
+    <h2>Enter Details</h2>
+    <form id="wordForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required><br><br>
+        
+        <label for="regn_date">Regn Date:</label>
+        <input type="date" id="regn_date" required><br><br>
+        
+        <label for="sample_collection">Sample Collection:</label>
+        <input type="date" id="sample_collection" required><br><br>
+        
+        <label for="print_date">Print Date:</label>
+        <input type="date" id="print_date" required><br><br>
+        
+        <label for="age">Age:</label>
+        <input type="number" id="age" required><br><br>
+        
+        <label for="gender">Gender:</label>
+        <select id="gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select><br><br>
+        
+        <button type="button" onclick="modifyAndDownloadWord()">Download Word File</button>
+    </form>
+    
+    <script>
+        async function modifyAndDownloadWord() {
+            const name = document.getElementById("name").value;
+            const regnDate = document.getElementById("regn_date").value;
+            const sampleCollection = document.getElementById("sample_collection").value;
+            const printDate = document.getElementById("print_date").value;
+            const age = document.getElementById("age").value;
+            const gender = document.getElementById("gender").value;
+            
+            const response = await fetch("report draft.docx");
+            const blob = await response.arrayBuffer();
+            const zip = new PizZip(blob);
+            const doc = new window.docxtemplater(zip);
+            
+            doc.setData({
+                "Shivam Nishad": name,
+                "16/01/2025": regnDate,
+                "16/01/2025": sampleCollection,
+                "17/01/2025": printDate,
+                "14 Years": age + " Years",
+                "Male": gender
+            });
+            
+            try {
+                doc.render();
+                const modifiedBlob = new Blob([doc.getZip().generate({ type: "arraybuffer" })], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(modifiedBlob);
+                link.download = "Updated-Report.docx";
+                link.click();
+            } catch (error) {
+                console.error("Error modifying document: ", error);
+            }
+        }
+    </script>
+</body>
+</html>
