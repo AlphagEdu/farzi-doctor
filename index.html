@@ -3,70 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modify & Download Word Report</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.6/pizzip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.27.0/docxtemplater.min.js"></script>
+    <title>FarziDoctor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+        h2 {
+            text-align: center;
+            font-size: 1.2em;
+            color: #555;
+        }
+        .form-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h2>Enter Details</h2>
-    <form id="wordForm">
-        <label for="name">Name:</label>
-        <input type="text" id="name" required><br><br>
-        
-        <label for="regn_date">Regn Date:</label>
-        <input type="date" id="regn_date" required><br><br>
-        
-        <label for="sample_collection">Sample Collection:</label>
-        <input type="date" id="sample_collection" required><br><br>
-        
-        <label for="print_date">Print Date:</label>
-        <input type="date" id="print_date" required><br><br>
-        
-        <label for="age">Age:</label>
-        <input type="number" id="age" required><br><br>
-        
-        <label for="gender">Gender:</label>
-        <select id="gender">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-        </select><br><br>
-        
-        <button type="button" onclick="modifyAndDownloadWord()">Download Word File</button>
-    </form>
-    
+    <h1>FarziDoctor</h1>
+    <h2>By: Aamir</h2>
+    <div class="form-container">
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="name">Patient Name:</label>
+                <input type="text" id="name" placeholder="Enter patient name" required>
+            </div>
+            <div class="form-group">
+                <label for="regDate">Registration Date:</label>
+                <input type="date" id="regDate" required>
+            </div>
+            <div class="form-group">
+                <label for="sampleCollection">Sample Collection Date/Time:</label>
+                <input type="datetime-local" id="sampleCollection" required>
+            </div>
+            <div class="form-group">
+                <label for="printDate">Print Date/Time:</label>
+                <input type="datetime-local" id="printDate" required>
+            </div>
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" placeholder="Enter age" required>
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender:</label>
+                <select id="gender" required>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <button type="button" onclick="generateReport()">Download Report</button>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.33.0/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <script>
-        async function modifyAndDownloadWord() {
-            const name = document.getElementById("name").value;
-            const regnDate = document.getElementById("regn_date").value;
-            const sampleCollection = document.getElementById("sample_collection").value;
-            const printDate = document.getElementById("print_date").value;
-            const age = document.getElementById("age").value;
-            const gender = document.getElementById("gender").value;
-            
-            const response = await fetch("report draft.docx");
-            const blob = await response.arrayBuffer();
-            const zip = new PizZip(blob);
-            const doc = new window.docxtemplater(zip);
-            
-            doc.setData({
-                "Shivam Nishad": name,
-                "16/01/2025": regnDate,
-                "16/01/2025": sampleCollection,
-                "17/01/2025": printDate,
-                "14 Years": age + " Years",
-                "Male": gender
-            });
-            
+        async function generateReport() {
+            // Get user inputs
+            const name = document.getElementById('name').value;
+            const regDate = document.getElementById('regDate').value;
+            const sampleCollection = document.getElementById('sampleCollection').value;
+            const printDate = document.getElementById('printDate').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+
+            // Validate inputs
+            if (!name || !regDate || !sampleCollection || !printDate || !age || !gender) {
+                alert("All fields are required!");
+                return;
+            }
+
+            // Format dates
+            const formatDate = (isoDate) => {
+                const [y, m, d] = isoDate.split('-');
+                return `${d}/${m}/${y}`;
+            };
+
+            const formatDateTime = (isoDateTime) => {
+                const [datePart, timePart] = isoDateTime.split('T');
+                const [y, m, d] = datePart.split('-');
+                const [h, min] = timePart.split(':');
+                return `${d}/${m}/${y} ${h}:${min}`;
+            };
+
+            // Prepare replacements
+            const replacements = {
+                'Shivam Nishad': name,
+                '16/01/2025 14:13': formatDateTime(`${regDate}T14:13`),
+                '16/01/2025 14:27': formatDateTime(sampleCollection),
+                '17/01/2025 17:24': formatDateTime(printDate),
+                '14 Years / Male': `${age} Years / ${gender}`
+            };
+
             try {
+                // Load the DOCX template
+                const response = await fetch('report_draft.docx');
+                const arrayBuffer = await response.arrayBuffer();
+
+                // Initialize docxtemplater
+                const zip = new JSZip(arrayBuffer);
+                const doc = new docxtemplater().loadZip(zip);
+
+                // Replace placeholders
+                doc.setData(replacements);
                 doc.render();
-                const modifiedBlob = new Blob([doc.getZip().generate({ type: "arraybuffer" })], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(modifiedBlob);
-                link.download = "Updated-Report.docx";
-                link.click();
+
+                // Generate the updated DOCX
+                const updatedDoc = doc.getZip().generate({ type: 'blob' });
+
+                // Save as DOCX
+                saveAs(updatedDoc, 'updated_report.docx');
+
+                // Optional: Convert to PDF
+                // const pdfDoc = await PDFLib.PDFDocument.create();
+                // const page = pdfDoc.addPage();
+                // const text = `Name: ${name}\nReg Date: ${regDate}\nSample Collection: ${sampleCollection}\nPrint Date: ${printDate}\nAge: ${age}\nGender: ${gender}`;
+                // page.drawText(text, { x: 50, y: 750, size: 12 });
+                // const pdfBytes = await pdfDoc.save();
+                // saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), 'updated_report.pdf');
+
             } catch (error) {
-                console.error("Error modifying document: ", error);
+                alert(`Error: ${error.message}`);
             }
         }
     </script>
